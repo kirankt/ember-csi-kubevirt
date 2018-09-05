@@ -1,0 +1,3 @@
+[submodule "kubevirt"]
+	path = kubevirt
+	url = https://github.com/kubevirt/kubevirt
