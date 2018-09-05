@@ -11,6 +11,6 @@ cluster-down:
 	cd kubevirt && ./cluster/down.sh && cd ..
 
 clean: cluster-down
-	rm -rf kubevirt cluster hack
+	rm -rf cluster hack
 
 .PHONY: repo-sync cluster-up cluster-down cluster-clean cluster-deploy cluster-sync clean
