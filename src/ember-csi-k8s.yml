@@ -1,35 +1,15 @@
 ---
 apiVersion: v1
+kind: Namespace
+metadata:
+  name: ember-csi
+
+---
+apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: ember-csi-sa
   namespace: ember-csi
-
----
-apiVersion: security.openshift.io/v1
-kind: SecurityContextConstraints
-metadata:
-  name: ember-csi-scc
-allowPrivilegedContainer: true
-allowPrivilegeEscalation: true
-allowHostDirVolumePlugin: true
-allowHostIPC: false
-allowHostNetwork: true
-allowHostPID: false
-allowHostPorts: false
-runAsUser:
-  type: RunAsAny
-seLinuxContext:
-  type: RunAsAny
-fsGroup:
-  type: RunAsAny
-supplementalGroups:
-  type: RunAsAny
-users:
-- system:serviceaccount:ember-csi:ember-csi-sa
-groups: []
-volumes:
-- '*'
 
 ---
 kind: ClusterRole
@@ -169,14 +149,6 @@ spec:
     - mountPath: /csi-data
       name: socket-dir
 
-    - name: mountpoint-dir
-      mountPath: /var/lib/origin/openshift.local.volumes
-      mountPropagation: Bidirectional
-
-    - name: kubelet-sock-dir
-      mountPath: /var/lib/kubelet
-      mountPropagation: Bidirectional
-
   - name: external-attacher
     args:
     - --v=5
@@ -214,12 +186,8 @@ spec:
     - name: socket-dir
       mountPath: /csi-data
 
-    - name: kubelet-sock-dir
-      mountPath: /var/lib/kubelet/device-plugins
-      mountPropagation: Bidirectional
-
     - name: mountpoint-dir
-      mountPath: /var/lib/origin/openshift.local.volumes
+      mountPath: /var/lib/kubelet
       mountPropagation: Bidirectional
 
     - mountPath: /etc/iscsi
@@ -254,14 +222,9 @@ spec:
       path: /var/lib/kubelet/plugins/io.ember-csi
       type: DirectoryOrCreate
 
-  - name: kubelet-sock-dir
-    hostPath:
-      path: /var/lib/kubelet/device-plugins
-      type: Directory
-
   - name: mountpoint-dir
     hostPath:
-      path: /var/lib/origin/openshift.local.volumes
+      path: /var/lib/kubelet
       type: Directory
 
   - name: run-dir

@@ -1,0 +1,301 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ember-csi
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ember-csi-sa
+  namespace: ember-csi
+
+---
+apiVersion: security.openshift.io/v1
+kind: SecurityContextConstraints
+metadata:
+  name: ember-csi-scc
+allowPrivilegedContainer: true
+allowPrivilegeEscalation: true
+allowHostDirVolumePlugin: true
+allowHostIPC: false
+allowHostNetwork: true
+allowHostPID: false
+allowHostPorts: false
+runAsUser:
+  type: RunAsAny
+seLinuxContext:
+  type: RunAsAny
+fsGroup:
+  type: RunAsAny
+supplementalGroups:
+  type: RunAsAny
+users:
+- system:serviceaccount:ember-csi:ember-csi-sa
+groups: []
+volumes:
+- '*'
+
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: ember-csi-cr
+rules:
+  # Allow managing ember resources
+  - apiGroups: ['ember-csi.io']
+    resources: ['*']
+    verbs: ['*']
+  # Allow listing and creating CRDs
+  - apiGroups: ['apiextensions.k8s.io']
+    resources: ['customresourcedefinitions']
+    verbs: ['list', 'create']
+  - apiGroups: ['']
+    resources: ['persistentvolumes']
+    verbs: ['create', 'delete', 'get', 'list', 'watch', 'update']
+  - apiGroups: ['']
+    resources: ['secrets']
+    verbs: ['get', 'list']
+  - apiGroups: ['']
+    resources: ['persistentvolumeclaims']
+    verbs: ['get', 'list', 'watch', 'update']
+  - apiGroups: ['']
+    resources: ['nodes']
+    verbs: ['get', 'list', 'watch', 'update']
+  - apiGroups: ['storage.k8s.io']
+    resources: ['volumeattachments']
+    verbs: ['get', 'list', 'watch', 'update']
+  - apiGroups: ['storage.k8s.io']
+    resources: ['storageclasses']
+    verbs: ['get', 'list', 'watch']
+  - apiGroups: ['']
+    resources: ['events']
+    verbs: ['list', 'watch', 'create', 'update', 'patch']
+
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: ember-csi-rb
+roleRef:
+  kind: ClusterRole
+  apiGroup: rbac.authorization.k8s.io
+  name: ember-csi-cr
+subjects:
+- kind: ServiceAccount
+  name: ember-csi-sa
+  namespace: ember-csi
+
+
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: ember-csi-aio-sc
+  namespace: ember-csi
+  # annotations:
+  #   storageclass.kubernetes.io/is-default-class: "true"
+provisioner: io.ember-csi-aio
+reclaimPolicy: Delete
+volumeBindingMode: Immediate
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    app: ember-driver
+  name: ember-csi-aio-pod
+  namespace: ember-csi
+spec:
+  serviceAccount: ember-csi-sa
+  hostNetwork: true
+  containers:
+
+  - name: ceph-demo
+    #image: ceph/daemon:v3.0.5-stable-3.0-luminous-centos-7
+    image: quay.io/kirankt/daemon
+    securityContext:
+      privileged: true
+    args: ["demo"]
+    env:
+    - name: MON_IP
+      valueFrom:
+        fieldRef:
+          fieldPath: status.hostIP
+    - name: CEPH_PUBLIC_NETWORK
+      value: "0.0.0.0/0"
+    - name: RGW_CIVETWEB_PORT
+      value: "81" # Don't clash with openshift
+    - name: CEPH_DEMO_UID
+      value: "qqq"
+    - name: CEPH_DEMO_ACCESS_KEY
+      value: "qqq"
+    - name: CEPH_DEMO_SECRET_KEY
+      value: "qqq"
+    - name: CEPH_DEMO_BUCKET
+      value: "qqq"
+    ports:
+      - containerPort: 5000
+    volumeMounts:
+    - name: cephvarlib
+      mountPath: /var/lib/ceph
+
+    - name: cephetc
+      mountPath: /etc/ceph
+
+  - name: external-provisioner
+    args:
+    - --v=5
+    - --provisioner=io.ember-csi-aio
+    - --csi-address=/csi-data/csi.sock
+    image: quay.io/k8scsi/csi-provisioner:v0.3.0
+    imagePullPolicy: Always
+    securityContext:
+      privileged: true
+    volumeMounts:
+    - mountPath: /csi-data
+      name: socket-dir
+
+  - name: driver-registrar
+    args:
+    - --v=5
+    - --csi-address=/csi-data/csi.sock
+    securityContext:
+      privileged: true
+    env:
+    - name: KUBE_NODE_NAME
+      valueFrom:
+        fieldRef:
+          apiVersion: v1
+          fieldPath: spec.nodeName
+    image: quay.io/k8scsi/driver-registrar:v0.3.0
+    imagePullPolicy: Always
+    volumeMounts:
+    - mountPath: /csi-data
+      name: socket-dir
+
+    - name: mountpoint-dir
+      mountPath: /var/lib/origin/openshift.local.volumes
+      mountPropagation: Bidirectional
+
+    - name: kubelet-sock-dir
+      mountPath: /var/lib/kubelet
+      mountPropagation: Bidirectional
+
+  - name: external-attacher
+    args:
+    - --v=5
+    - --csi-address=/csi-data/csi.sock
+    securityContext:
+      privileged: true
+    image: quay.io/k8scsi/csi-attacher:v0.3.0
+    imagePullPolicy: Always
+    volumeMounts:
+    - mountPath: /csi-data
+      name: socket-dir
+
+  - name: ember-driver
+    image: akrog/ember-csi:master
+    imagePullPolicy: Always
+    terminationMessagePath: "/tmp/my-log"
+    securityContext:
+      privileged: true
+      allowPrivilegeEscalation: true
+    env:
+    - name: PYTHONUNBUFFERED
+      value: '0'
+    - name: CSI_ENDPOINT
+      value: unix:///csi-data/csi.sock
+    - name: KUBE_NODE_NAME
+      valueFrom:
+        fieldRef:
+          apiVersion: v1
+          fieldPath: spec.nodeName
+    - name: X_CSI_PERSISTENCE_CONFIG
+      value: '{"storage":"crd"}'
+    - name: X_CSI_BACKEND_CONFIG
+      value: '{"volume_backend_name": "rbd", "volume_driver": "cinder.volume.drivers.rbd.RBDDriver", "rbd_user": "admin", "rbd_pool": "cephfs_data", "rbd_ceph_conf": "/etc/ceph/ceph.conf", "rbd_keyring_conf": "/etc/ceph/ceph.client.admin.keyring"}'
+    volumeMounts:
+    - name: socket-dir
+      mountPath: /csi-data
+
+    - name: kubelet-sock-dir
+      mountPath: /var/lib/kubelet/device-plugins
+      mountPropagation: Bidirectional
+
+    - name: mountpoint-dir
+      mountPath: /var/lib/origin/openshift.local.volumes
+      mountPropagation: Bidirectional
+
+    - mountPath: /etc/iscsi
+      mountPropagation: Bidirectional
+      name: iscsi-dir
+
+    - mountPath: /run/udev
+      mountPropagation: HostToContainer
+      name: run-dir
+
+    - mountPath: /dev
+      mountPropagation: Bidirectional
+      name: dev-dir
+
+    - mountPath: /etc/lvm/lvm.conf
+      mountPropagation: None
+      name: lvm-conf
+
+    - mountPath: /lib/modules
+      mountPropagation: HostToContainer
+      name: modules-dir
+
+    - name: cephvarlib
+      mountPath: /var/lib/ceph
+
+    - name: cephetc
+      mountPath: /etc/ceph
+
+  volumes:
+  - name: socket-dir
+    hostPath:
+      path: /var/lib/kubelet/plugins/io.ember-csi
+      type: DirectoryOrCreate
+
+  - name: kubelet-sock-dir
+    hostPath:
+      path: /var/lib/kubelet/device-plugins
+      type: Directory
+
+  - name: mountpoint-dir
+    hostPath:
+      path: /var/lib/origin/openshift.local.volumes
+      type: Directory
+
+  - name: run-dir
+    hostPath:
+      path: /run/udev
+
+  - hostPath:
+      path: /etc/iscsi
+      type: Directory
+    name: iscsi-dir
+
+  - hostPath:
+      path: /dev
+      # type: Directory
+    name: dev-dir
+
+  - hostPath:
+      path: /etc/lvm/lvm.conf
+      type: File
+    name: lvm-conf
+
+  - hostPath:
+      path: /lib/modules
+    name: modules-dir
+
+  - name: cephvarlib
+    emptyDir: {}
+
+  - name: cephetc
+    emptyDir: {}
+
