@@ -1,5 +1,5 @@
 repo-sync:
-	git submodule init && git submodule update
+	mkdir kubevirt && git submodule init && git submodule update
 	ln -sf kubevirt/cluster && ln -sf kubevirt/hack
 
 .ONESHELL:
