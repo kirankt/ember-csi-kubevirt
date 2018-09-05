@@ -1,10 +1,8 @@
 #!/usr/bin/env bash
 
-source hack/common.sh
+KUBEVIRT_NUM_NODES=${KUBEVIRT_NUM_NODES:-1}
 
 _kubectl='cluster/kubectl.sh'
-KUBEVIRT_NUM_NODES=${KUBEVIRT_NUM_NODES:-1}
-KUBEVIRT_PROVIDER=${KUBEVIRT_PROVIDER:-k8s-1.11.0}
 
 function _ssh() {
   cluster/cli.sh ssh node$(printf "%02d" $1) -- sudo $2
