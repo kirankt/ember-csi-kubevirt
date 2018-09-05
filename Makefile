@@ -19,4 +19,4 @@ cluster-deploy: cluster-clean
 
 cluster-sync: cluster-build cluster-deploy
 
-.PHONY: cluster-up cluster-down cluster-clean cluster-deploy cluster-sync
+.PHONY: repo-sync cluster-up cluster-down cluster-clean cluster-deploy cluster-sync
