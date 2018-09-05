@@ -1,0 +1,29 @@
+---
+apiVersion: kubevirt.io/v1
+kind: VirtualMachineInstance
+metadata:
+  creationTimestamp: null
+  name: vm-cirros
+spec:
+  template:
+    terminationGracePeriodSeconds: 0
+    spec:
+      domain:
+        devices:
+          disks:
+          - disk:
+              bus: virtio
+            name: pvcdisk
+            volumeName: pvcvolume
+        machine:
+          type: ""
+        resources:
+          requests:
+            memory: 64M
+      volumes:
+      - name: pvcvolume
+        persistentVolumeClaim:
+          claimName: ember-csi-aio-pvc
+  running: false
+status: {}
+

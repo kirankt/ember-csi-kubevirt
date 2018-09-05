@@ -1,10 +1,12 @@
+---
 kind: Pod
 apiVersion: v1
 metadata:
-  name: my-csi-app
+  name: busybox-sleep
+  namespace: ember-csi
 spec:
   containers:
-    - name: my-frontend
+    - name: busybox-sleep
       image: busybox
       volumeMounts:
       - mountPath: "/data"
@@ -13,4 +15,4 @@ spec:
   volumes:
     - name: my-csi-volume
       persistentVolumeClaim:
-        claimName: ember-csi-pvc
+        claimName: ember-csi-aio-pvc
