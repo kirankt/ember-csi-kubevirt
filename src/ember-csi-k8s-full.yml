@@ -8,34 +8,8 @@ metadata:
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: mber-csi-sa
+  name: ember-csi-sa
   namespace: ember-csi
-
----
-apiVersion: security.openshift.io/v1
-kind: SecurityContextConstraints
-metadata:
-  name: ember-csi-scc
-allowPrivilegedContainer: true
-allowPrivilegeEscalation: true
-allowHostDirVolumePlugin: true
-allowHostIPC: false
-allowHostNetwork: true
-allowHostPID: false
-allowHostPorts: false
-runAsUser:
-  type: RunAsAny
-seLinuxContext:
-  type: RunAsAny
-fsGroup:
-  type: RunAsAny
-supplementalGroups:
-  type: RunAsAny
-users:
-- system:serviceaccount:ember-csi:ember-csi-sa
-groups: []
-volumes:
-- '*'
 
 ---
 kind: ClusterRole
@@ -86,7 +60,6 @@ subjects:
 - kind: ServiceAccount
   name: ember-csi-sa
   namespace: ember-csi
-
 
 ---
 apiVersion: storage.k8s.io/v1
@@ -277,13 +250,10 @@ spec:
                 apiVersion: v1
                 fieldPath: spec.nodeName
           volumeMounts:
-          - name: kubelet-sock-dir
-            mountPath: /var/lib/kubelet/device-plugins
-            mountPropagation: Bidirectional
           - mountPath: /csi-data
             name: socket-dir
           - name: mountpoint-dir
-            mountPath: /var/lib/origin/openshift.local.volumes
+            mountPath: /var/lib/kubelet
             mountPropagation: Bidirectional
         - name: ember-csi-driver
           image: akrog/ember-csi:master
@@ -312,11 +282,8 @@ spec:
             - name: iscsi-dir
               mountPath: /etc/iscsi
               mountPropagation: Bidirectional
-            - name: kubelet-sock-dir
-              mountPath: /var/lib/kubelet/device-plugins
-              mountPropagation: Bidirectional
             - name: mountpoint-dir
-              mountPath: /var/lib/origin/openshift.local.volumes
+              mountPath: /var/lib/kubelet
               mountPropagation: Bidirectional
             - name: run-dir
               mountPath: /run/udev
@@ -341,13 +308,9 @@ spec:
           hostPath:
             path: /var/lib/kubelet/plugins/io.ember-csi
             type: DirectoryOrCreate
-        - name: kubelet-sock-dir
-          hostPath:
-            path: /var/lib/kubelet/device-plugins
-            type: Directory
         - name: mountpoint-dir
           hostPath:
-            path: /var/lib/origin/openshift.local.volumes/
+            path: /var/lib/kubelet
             type: Directory
         - name: iscsi-dir
           hostPath:

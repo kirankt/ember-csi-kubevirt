@@ -19,7 +19,7 @@ done
 
 # Deploy Ember CSI
 if [[ $KUBEVIRT_PROVIDER =~ .*k8s.* ]]; then
-	$_kubectl apply -f src/ember-csi-k8s.yml
+	$_kubectl apply -f src/ember-csi-k8s-full.yml
 elif [[  $KUBEVIRT_PROVIDER =~ .*ocp.* ]]; then
-	$_kubectl apply -f src/ember-csi-ocp.yml
+	$_kubectl apply -f src/ember-csi-ocp-full.yml
 fi
