@@ -89,7 +89,7 @@ spec:
       hostNetwork: true
       containers:
       - name: ceph-demo
-        image: quay.io/kirankt/daemon
+        image: ceph/daemon:latest-luminous
         securityContext:
           privileged: true
         args: ["demo"]
