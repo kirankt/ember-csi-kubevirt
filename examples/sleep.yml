@@ -3,7 +3,6 @@ kind: Pod
 apiVersion: v1
 metadata:
   name: busybox-sleep
-  namespace: ember-csi
 spec:
   containers:
     - name: busybox-sleep
