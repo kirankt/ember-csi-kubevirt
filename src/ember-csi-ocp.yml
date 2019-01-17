@@ -113,8 +113,7 @@ spec:
   containers:
 
   - name: ceph-demo
-    #image: ceph/daemon:v3.0.5-stable-3.0-luminous-centos-7
-    image: quay.io/kirankt/daemon
+    image: ceph/daemon:latest-luminous
     securityContext:
       privileged: true
     args: ["demo"]

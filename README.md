@@ -10,7 +10,7 @@ Note: This repo is still work in progress.
 This deployment deploys an ephemeral Ceph container alongside Ember CSI and its sidecar containers.
 
 ```
-$ git clone https://github.com/kirankt/ember-csi-kubevirt.git
+$ git clone https://github.com/embercsi/ember-csi-kubevirt.git
 $ cd ember-csi-kubevirt/
 $ make cluster-up
 $ source tools/env.sh 
