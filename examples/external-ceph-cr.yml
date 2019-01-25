@@ -9,7 +9,7 @@ spec:
   config:
     envVars:
       X_CSI_PERSISTENCE_CONFIG:       '{"storage":"crd"}'
-      X_CSI_BACKEND_CONFIG :          '{"volume_backend_name": "rbd", "volume_driver": "cinder.volume.drivers.rbd.RBDDriver", "rbd_user": "admin", "rbd_pool": "cephfs_data", "rbd_ceph_conf": "/etc/ceph/ceph.conf", "rbd_keyring_conf": "/etc/ceph/ceph.client.admin.keyring"}'
+      X_CSI_BACKEND_CONFIG :          '{"name": "rbd", "driver": "RBD", "rbd_user": "admin", "rbd_pool": "cephfs_data", "rbd_ceph_conf": "/etc/ceph/ceph.conf", "rbd_keyring_conf": "/etc/ceph/ceph.client.admin.keyring"}'
     sysfiles:
       name: system-files
       key: "system-files.tar"
