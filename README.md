@@ -13,10 +13,8 @@ This deployment deploys an ephemeral Ceph container alongside Ember CSI and its 
 $ git clone https://github.com/embercsi/ember-csi-kubevirt.git
 $ cd ember-csi-kubevirt/
 $ make cluster-up
-$ source tools/env.sh 
-$ k apply -f examples/pvc.yml 
-$ k get pvc
-$ k apply -f examples/sleep.yml 
+$ make deploy
+$ make demo
 $ make cluster-down
 ```
 
@@ -25,11 +23,11 @@ $ make cluster-down
 The templates in the src directory can be applied directly on an existing K8s or OCP cluster.
 
 ```
-kubectl apply -f src/ember-csi-k8s.yml
+kubectl apply -f src/install-operator.yml
 ```
 
-or in an OpenShift cluster using:
+On an OpenShift cluster you'll also need:
 
 ```
-oc apply -f src/ember-csi-ocp.yml
+kubectl apply -f src/install-operator-scc.yml
 ```
