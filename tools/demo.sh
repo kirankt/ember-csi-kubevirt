@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 _kubectl='cluster/kubectl.sh'
+_virtctl='cluster/virtctl.sh'
 
 # Install a Ceph demo container
 $_kubectl create -f examples/ceph-demo.yml
@@ -26,8 +27,12 @@ $_kubectl -n ember-csi wait --timeout=300s --for=condition=Ready pod/external-ce
 $_kubectl create namespace sample-project
 
 $_kubectl -n sample-project create -f examples/pvc.yml
-$_kubectl -n sample-project create -f examples/sleep.yml
 
-$_kubectl -n sample-project wait --timeout=300s --for=condition=Ready pod/busybox-sleep
-$_kubectl -n sample-project describe pods busybox-sleep | tail
-$_kubectl -n sample-project exec -it busybox-sleep  -- df -h | grep -B 1 /data
+# Deploy Kubevirt and install virtctl
+$_kubectl apply -f https://github.com/kubevirt/kubevirt/releases/download/$KUBEVIRT_VERSION/kubevirt-operator.yaml
+$_kubectl apply -f https://github.com/kubevirt/kubevirt/releases/download/$KUBEVIRT_VERSION/kubevirt-cr.yaml
+
+# Install virtctl
+mkdir -p _out/cmd/virtctl
+curl -L -o _out/cmd/virtctl/virtctl https://github.com/kubevirt/kubevirt/releases/download/$VERSION/virtctl-$KUBEVIRT_VERSION-linux-amd64
+chmod 755 _out/cmd/virtctl/virtctl

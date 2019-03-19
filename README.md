@@ -12,9 +12,35 @@ This deployment deploys an ephemeral Ceph container alongside Ember CSI and its 
 ```
 $ git clone https://github.com/embercsi/ember-csi-kubevirt.git
 $ cd ember-csi-kubevirt/
-$ make cluster-up
-$ make deploy
-$ make demo
+$ make all
+```
+
+At this point we have  fully working cluster with KubeVirt and Ember-CSI deployed. We can now deploy VMs.
+
+```
+# Creating a virtual machine
+$ kubectl apply -f https://raw.githubusercontent.com/kubevirt/demo/master/manifests/vm.yaml
+
+# After deployment you can manage VMs using the usual verbs:
+$ kubectl get vms
+$ kubectl get vms -o yaml testvm
+
+# To start a VM you can use
+$ ./virtctl start testvm
+
+# Afterwards you can inspect the instances
+$ kubectl get vmis
+$ kubectl get vmis -o yaml testvm
+
+# To shut it down again
+$ ./virtctl stop testvm
+
+# To delete
+$ kubectl delete vms testvm
+```
+
+### Tear down the whole all-in-one deployment using:
+```
 $ make cluster-down
 ```
 
