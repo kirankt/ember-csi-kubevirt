@@ -8,4 +8,5 @@ export KUBEVIRT_PROVIDER=${KUBEVIRT_PROVIDER:-os-3.11.0}
 export KUBEVIRT_VERSION=v0.15.0
 
 # Useful aliases
-alias k='./cluster/kubectl.sh -n ember-csi'
+alias k='./cluster/kubectl.sh -n sample-project'
+alias v='./cluster/virtctl.sh -n sample-project'

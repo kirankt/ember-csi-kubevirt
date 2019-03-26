@@ -18,25 +18,27 @@ $ make all
 At this point we have  fully working cluster with KubeVirt and Ember-CSI deployed. We can now deploy VMs.
 
 ```
-# Creating a virtual machine
-$ kubectl apply -f https://raw.githubusercontent.com/kubevirt/demo/master/manifests/vm.yaml
+# Source the environment and create a PVC
+$ source tools/env.sh
+$ k create -f examples/cirros-pvc.yml
+$ k get pvc
 
-# After deployment you can manage VMs using the usual verbs:
-$ kubectl get vms
-$ kubectl get vms -o yaml testvm
+# Wait for the CDI Importer pod to finish importing.
+# Once done, the pod (job) vanishes at which point,
+# we may proceed to create the VM.
+$ k logs importer-cirros-pvc-v7fcs
 
-# To start a VM you can use
-$ ./virtctl start testvm
+# Create the VM
+$ k create -f examples/cirros-vm.yml
 
-# Afterwards you can inspect the instances
-$ kubectl get vmis
-$ kubectl get vmis -o yaml testvm
+# To inspect the VM use the alias to virtctl command.
+$ v console cirros-vm
 
 # To shut it down again
-$ ./virtctl stop testvm
+$ v stop cirros-vm
 
 # To delete
-$ kubectl delete vms testvm
+$ k delete vms cirros-vm
 ```
 
 ### Tear down the whole all-in-one deployment using:
@@ -49,11 +51,12 @@ $ make cluster-down
 The templates in the src directory can be applied directly on an existing K8s or OCP cluster.
 
 ```
-kubectl apply -f src/install-operator.yml
+kubectl create namespace ember-csi
+kubectl -n ember-csi create -f src/install-operator.yml
 ```
 
 On an OpenShift cluster you'll also need:
 
 ```
-kubectl apply -f src/install-operator-scc.yml
+kubectl -n ember-csi create -f src/install-operator-scc.yml
 ```

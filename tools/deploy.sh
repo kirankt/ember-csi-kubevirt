@@ -4,6 +4,11 @@ KUBEVIRT_NUM_NODES=${KUBEVIRT_NUM_NODES:-1}
 
 _kubectl='cluster/kubectl.sh'
 
+# Make space for pods by removing unneeded pods
+if [[ $KUBEVIRT_PROVIDER =~ .*os.* ]]; then
+  $_kubectl delete namespace openshift-monitoring
+fi
+
 # Deploy Ember CSI operator
 $_kubectl create -f src/install-operator.yml
 
