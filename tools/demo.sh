@@ -26,13 +26,16 @@ $_kubectl -n ember-csi wait --timeout=300s --for=condition=Ready pod/external-ce
 # Let's create a sample PVC and pod using the PVC
 $_kubectl create namespace sample-project
 
-$_kubectl -n sample-project create -f examples/pvc.yml
-
 # Deploy Kubevirt and install virtctl
 $_kubectl apply -f https://github.com/kubevirt/kubevirt/releases/download/$KUBEVIRT_VERSION/kubevirt-operator.yaml
 $_kubectl apply -f https://github.com/kubevirt/kubevirt/releases/download/$KUBEVIRT_VERSION/kubevirt-cr.yaml
 
 # Install virtctl
 mkdir -p _out/cmd/virtctl
-curl -L -o _out/cmd/virtctl/virtctl https://github.com/kubevirt/kubevirt/releases/download/$VERSION/virtctl-$KUBEVIRT_VERSION-linux-amd64
+curl -L -o _out/cmd/virtctl/virtctl https://github.com/kubevirt/kubevirt/releases/download/$KUBEVIRT_VERSION/virtctl-$KUBEVIRT_VERSION-linux-amd64
 chmod 755 _out/cmd/virtctl/virtctl
+
+# Deploy CDI
+export CDI_VERSION=v1.5.0
+$_kubectl create -f https://github.com/kubevirt/containerized-data-importer/releases/download/$CDI_VERSION/cdi-controller.yaml
+
