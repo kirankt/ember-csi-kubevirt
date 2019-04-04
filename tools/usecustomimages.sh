@@ -7,6 +7,10 @@ _ssh='cluster/cli.sh ssh node01'
 # Workaround for https://bugs.centos.org/view.php?id=14785
 $_ssh "sudo touch /etc/rhsm/ca/redhat-uep.pem"
 
+if [ -n "${EMBER_BUILD_URL}" ]; then
+	EMBER_IMAGE_URL=`curl -k ${EMBER_BUILD_URL} | egrep -o "http://.*tar.gz"`
+fi
+
 if [ -n "${EMBER_IMAGE_URL}" ]; then
 	# Make sure domain name is resolved on node01
 	HOSTNAME_ENTRY=`echo ${EMBER_IMAGE_URL} | awk -F[/:] '{print $4}' | xargs getent hosts`
@@ -17,6 +21,10 @@ if [ -n "${EMBER_IMAGE_URL}" ]; then
 	$_ssh 'sudo docker tag $(sudo docker images -q */ember-csi-container) registry:5000/embercsi/ember-csi'
 	$_ssh 'sudo docker push registry:5000/embercsi/ember-csi'
 	sed -i -e 's#image: embercsi/ember-csi#image: registry:5000/embercsi/ember-csi#g' examples/external-ceph-cr.yml
+fi
+
+if [ -n "${EMBER_OPERATOR_BUILD_URL}" ]; then
+	EMBER_OPERATOR_IMAGE_URL=`curl -k ${EMBER_OPERATOR_BUILD_URL} | egrep -o "http://.*tar.gz"`
 fi
 
 if [ -n "${EMBER_OPERATOR_IMAGE_URL}" ]; then
